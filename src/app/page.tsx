@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Trash2, Plus, Printer } from 'lucide-react'
+import { Trash2, Plus, Printer, Download } from 'lucide-react'
+import html2canvas from 'html2canvas'
 
 interface ReceiptItem {
   id: string
@@ -99,6 +100,65 @@ export default function ShoppingReceipt() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleSaveAsPNG = async () => {
+    try {
+      const receiptElement = document.getElementById('receipt')
+      if (!receiptElement) {
+        alert('Element receipt tidak ditemukan!')
+        return
+      }
+
+      // Create a temporary container with white background
+      const tempContainer = document.createElement('div')
+      tempContainer.style.position = 'absolute'
+      tempContainer.style.left = '-9999px'
+      tempContainer.style.background = 'white'
+      tempContainer.style.padding = '20px'
+      
+      // Clone the receipt element
+      const clonedReceipt = receiptElement.cloneNode(true) as HTMLElement
+      clonedReceipt.style.border = 'none'
+      clonedReceipt.style.background = 'white'
+      
+      tempContainer.appendChild(clonedReceipt)
+      document.body.appendChild(tempContainer)
+
+      // Generate canvas from the cloned element
+      const canvas = await html2canvas(clonedReceipt, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      })
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          
+          // Generate filename with timestamp
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+          const storeNameClean = (storeName || 'Nota').replace(/[^a-zA-Z0-9]/g, '_')
+          link.download = `Nota_${storeNameClean}_${timestamp}.png`
+          
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }
+      }, 'image/png')
+
+      // Clean up temporary container
+      document.body.removeChild(tempContainer)
+    } catch (error) {
+      console.error('Error saving as PNG:', error)
+      alert('Gagal menyimpan nota sebagai PNG. Silakan coba lagi.')
+    }
   }
 
   return (
@@ -245,10 +305,16 @@ export default function ShoppingReceipt() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Preview Nota</CardTitle>
-                <Button onClick={handlePrint} variant="outline">
-                  <Printer className="w-4 h-4 mr-2" />
-                  Cetak
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveAsPNG} variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Simpan PNG
+                  </Button>
+                  <Button onClick={handlePrint} variant="outline">
+                    <Printer className="w-4 h-4 mr-2" />
+                    Cetak
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
