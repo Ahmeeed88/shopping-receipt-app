@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Trash2, Plus, Printer, Download } from 'lucide-react'
+import { Trash2, Plus, Printer, Download, Lock, LogOut } from 'lucide-react'
 import html2canvas from 'html2canvas'
 
 interface ReceiptItem {
@@ -18,6 +18,12 @@ interface ReceiptItem {
 }
 
 export default function ShoppingReceipt() {
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  
+  // Main application state
   const [storeName, setStoreName] = useState('TOKO KELONTONG')
   const [storeAddress, setStoreAddress] = useState('')
   const [storePhone, setStorePhone] = useState('')
@@ -28,6 +34,17 @@ export default function ShoppingReceipt() {
   const [paymentMethod, setPaymentMethod] = useState('Tunai')
   const [status, setStatus] = useState('Lunas')
   const [currentTime, setCurrentTime] = useState(new Date())
+  
+  // Default password - you can change this
+  const CORRECT_PASSWORD = 'admin123'
+
+  // Check authentication on mount
+  useEffect(() => {
+    const authStatus = sessionStorage.getItem('isAuthenticated')
+    if (authStatus === 'true') {
+      setIsAuthenticated(true)
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -35,6 +52,78 @@ export default function ShoppingReceipt() {
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === CORRECT_PASSWORD) {
+      setIsAuthenticated(true)
+      sessionStorage.setItem('isAuthenticated', 'true')
+      setError('')
+    } else {
+      setError('Password salah! Silakan coba lagi.')
+      setPassword('')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    sessionStorage.removeItem('isAuthenticated')
+    setPassword('')
+    setError('')
+  }
+
+  // If not authenticated, show login screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-800">
+              Aplikasi Nota Belanja
+            </CardTitle>
+            <p className="text-gray-600 mt-2">
+              Masukkan password untuk mengakses aplikasi
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Masukkan password"
+                  className="mt-1"
+                  required
+                />
+              </div>
+              
+              {error && (
+                <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+                  {error}
+                </div>
+              )}
+              
+              <Button type="submit" className="w-full">
+                <Lock className="w-4 h-4 mr-2" />
+                Masuk
+              </Button>
+            </form>
+            
+            <div className="mt-6 text-center text-xs text-gray-500">
+              <p>Password default: <span className="font-mono bg-gray-100 px-2 py-1 rounded">admin123</span></p>
+              <p className="mt-1">Hubungi admin untuk password yang berbeda</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const addItem = () => {
     const newItem: ReceiptItem = {
@@ -164,7 +253,14 @@ export default function ShoppingReceipt() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Aplikasi Nota Belanja</h1>
+        {/* Header with Logout */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-center flex-1">Aplikasi Nota Belanja</h1>
+          <Button onClick={handleLogout} variant="outline" className="no-print">
+            <LogOut className="w-4 h-4 mr-2" />
+            Keluar
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Form */}
