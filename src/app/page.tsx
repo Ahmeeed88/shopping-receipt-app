@@ -28,6 +28,7 @@ export default function ShoppingReceipt() {
   const [storeAddress, setStoreAddress] = useState('')
   const [storePhone, setStorePhone] = useState('')
   const [cashierName, setCashierName] = useState('Kasir')
+  const [receiptNumber, setReceiptNumber] = useState('001')
   const [items, setItems] = useState<ReceiptItem[]>([
     { id: '1', name: '', quantity: 1, price: 0 }
   ])
@@ -167,11 +168,10 @@ export default function ShoppingReceipt() {
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const year = date.getFullYear().toString().slice(-2)
+    return `${day}-${month}-${year}`
   }
 
   const formatTime = (date: Date) => {
@@ -313,6 +313,17 @@ export default function ShoppingReceipt() {
                 />
               </div>
 
+              {/* Receipt Number */}
+              <div>
+                <Label htmlFor="receiptNumber">Nomor Nota</Label>
+                <Input
+                  id="receiptNumber"
+                  value={receiptNumber}
+                  onChange={(e) => setReceiptNumber(e.target.value)}
+                  placeholder="Masukkan nomor nota"
+                />
+              </div>
+
               {/* Items */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -325,38 +336,81 @@ export default function ShoppingReceipt() {
                 
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {items.map((item, index) => (
-                    <div key={item.id} className="flex gap-2 items-center p-3 border rounded-lg">
-                      <span className="text-sm font-medium w-8">{index + 1}.</span>
-                      <Input
-                        placeholder="Nama barang"
-                        value={item.name}
-                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Qty"
-                        value={item.quantity || ''}
-                        onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                        className="w-20"
-                        min="1"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Harga"
-                        value={item.price || ''}
-                        onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                        className="w-32"
-                        min="0"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                        disabled={items.length === 1}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div key={item.id}>
+                      {/* Desktop Layout */}
+                      <div className="hidden sm:flex gap-2 items-center p-3 border rounded-lg">
+                        <span className="text-sm font-medium w-8">{index + 1}.</span>
+                        <Input
+                          placeholder="Nama barang"
+                          value={item.name}
+                          onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          value={item.quantity || ''}
+                          onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                          className="w-20"
+                          min="1"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Harga"
+                          value={item.price || ''}
+                          onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                          className="w-32"
+                          min="0"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeItem(item.id)}
+                          disabled={items.length === 1}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Mobile Layout */}
+                      <div className="sm:hidden p-3 border rounded-lg space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium w-6">{index + 1}.</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeItem(item.id)}
+                            disabled={items.length === 1}
+                            className="ml-auto"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Nama barang"
+                          value={item.name}
+                          onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                          className="w-full"
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Qty"
+                            value={item.quantity || ''}
+                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                            className="flex-1"
+                            min="1"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Harga"
+                            value={item.price || ''}
+                            onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                            className="flex-1"
+                            min="0"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -429,32 +483,57 @@ export default function ShoppingReceipt() {
                 <Separator className="mb-4" />
 
                 {/* Date and Time */}
-                <div className="text-center mb-4">
-                  <p className="text-sm">{getDayName(currentTime)}, {formatDate(currentTime)}</p>
-                  <p className="text-sm">{formatTime(currentTime)}</p>
+                <div className="mb-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-left">
+                      <div>No. Nota: <span className="font-bold">{receiptNumber || '001'}</span></div>
+                      <div>Kasir: <span className="font-bold">{cashierName || '-'}</span></div>
+                    </div>
+                    <div className="text-right">
+                      <div>{formatDate(currentTime)}</div>
+                      <div>{formatTime(currentTime)}</div>
+                    </div>
+                  </div>
                 </div>
 
                 <Separator className="mb-4" />
 
                 {/* Items Table */}
                 <div className="mb-4">
-                  <div className="grid grid-cols-12 text-xs font-bold mb-2">
+                  {/* Header - Desktop Layout */}
+                  <div className="hidden sm:grid grid-cols-12 text-xs font-bold mb-2">
                     <div className="col-span-1">No</div>
-                    <div className="col-span-5">Barang</div>
+                    <div className="col-span-6">Barang</div>
                     <div className="col-span-2 text-center">Qty</div>
-                    <div className="col-span-2 text-right">Harga</div>
-                    <div className="col-span-2 text-right">Subtotal</div>
+                    <div className="col-span-3 text-right">Subtotal</div>
+                  </div>
+                  
+                  {/* Header - Mobile Layout */}
+                  <div className="sm:hidden text-xs font-bold mb-2">
+                    <div className="flex justify-between items-center">
+                      <span>Daftar Barang</span>
+                    </div>
                   </div>
                   
                   <Separator className="mb-2" />
 
+                  {/* Items - Desktop Layout */}
                   {items.filter(item => item.name).map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-12 text-xs mb-1">
-                      <div className="col-span-1">{index + 1}</div>
-                      <div className="col-span-5 truncate">{item.name}</div>
-                      <div className="col-span-2 text-center">{item.quantity}</div>
-                      <div className="col-span-2 text-right">{formatCurrency(item.price)}</div>
-                      <div className="col-span-2 text-right">{formatCurrency(calculateSubtotal(item))}</div>
+                    <div key={item.id}>
+                      <div className="hidden sm:grid grid-cols-12 text-xs mb-1">
+                        <div className="col-span-1">{index + 1}</div>
+                        <div className="col-span-6 truncate">{item.name}</div>
+                        <div className="col-span-2 text-center">{item.quantity}</div>
+                        <div className="col-span-3 text-right">{formatCurrency(calculateSubtotal(item))}</div>
+                      </div>
+                      
+                      {/* Items - Mobile Layout */}
+                      <div className="sm:hidden text-xs mb-3 border-b border-gray-100 pb-2">
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium flex-1">{index + 1}. {item.name}</span>
+                          <span className="font-bold ml-2">{formatCurrency(calculateSubtotal(item))}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
